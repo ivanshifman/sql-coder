@@ -1,4 +1,4 @@
-CREATE VIEW vista_productos_detallados AS
+CREATE OR REPLACE VIEW vista_productos_detallados AS
 SELECT 
   p.id_producto,
   p.nombre_producto,
@@ -13,11 +13,11 @@ FROM Producto p
 JOIN Categoria c ON p.id_categoria = c.id_categoria
 JOIN Proveedor pr ON p.id_proveedor_principal = pr.id_proveedor;
 
-CREATE VIEW vista_ordenes_clientes_vendedores AS
+CREATE OR REPLACE VIEW vista_ordenes_clientes_vendedores AS
 SELECT 
   o.id_orden,
   o.fecha,
-  o.total,
+  COALESCE(SUM(d.cantidad * d.precio_unitario), 0) AS total,
   o.estado,
   c.nombre AS nombre_cliente,
   c.apellido AS apellido_cliente,
@@ -25,9 +25,11 @@ SELECT
   v.apellido AS apellido_vendedor
 FROM Orden o
 JOIN Cliente c ON o.id_cliente = c.id_cliente
-JOIN Vendedor v ON o.id_vendedor = v.id_vendedor;
+JOIN Vendedor v ON o.id_vendedor = v.id_vendedor
+LEFT JOIN Detalle_Orden d ON o.id_orden = d.id_orden
+GROUP BY o.id_orden;
 
-CREATE VIEW vista_detalle_ordenes AS
+CREATE OR REPLACE VIEW vista_detalle_ordenes AS
 SELECT 
   do.id_detalle,
   do.id_orden,
@@ -38,7 +40,7 @@ SELECT
 FROM Detalle_Orden do
 JOIN Producto p ON do.id_producto = p.id_producto;
 
-CREATE VIEW vista_resenas_productos AS
+CREATE OR REPLACE VIEW vista_resenas_productos AS
 SELECT 
   r.id_resena,
   c.nombre AS nombre_cliente,
@@ -51,7 +53,7 @@ FROM Resena r
 JOIN Cliente c ON r.id_cliente = c.id_cliente
 JOIN Producto p ON r.id_producto = p.id_producto;
 
-CREATE VIEW vista_compras_proveedor AS
+CREATE OR REPLACE VIEW vista_compras_proveedor AS
 SELECT 
   cp.id_compra,
   cp.fecha,
@@ -66,7 +68,7 @@ JOIN Detalle_Compra_Proveedor dcp ON cp.id_compra = dcp.id_compra
 JOIN Producto p ON dcp.id_producto = p.id_producto
 JOIN Proveedor pr ON cp.id_proveedor = pr.id_proveedor;
 
-CREATE VIEW Vista_Totales_Orden AS
+CREATE OR REPLACE VIEW Vista_Totales_Orden AS
 SELECT 
     o.id_orden,
     c.nombre AS cliente_nombre,
