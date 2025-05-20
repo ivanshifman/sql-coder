@@ -66,7 +66,6 @@ CREATE TABLE Orden (
     id_cliente INT UNSIGNED NOT NULL,
     id_vendedor INT UNSIGNED NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total DECIMAL(10,2) NOT NULL,
     estado ENUM('pendiente', 'pagado', 'cancelado', 'enviado') DEFAULT 'pendiente',
     FOREIGN KEY (id_cliente) REFERENCES Cliente(id_cliente)
         ON DELETE RESTRICT ON UPDATE CASCADE,
@@ -116,7 +115,6 @@ CREATE TABLE Compra_Proveedor (
     id_compra INT UNSIGNED AUTO_INCREMENT PRIMARY KEY,
     id_proveedor INT UNSIGNED NOT NULL,
     fecha DATETIME DEFAULT CURRENT_TIMESTAMP,
-    total DECIMAL(10,2) NOT NULL,
     estado ENUM('pendiente', 'recibida', 'cancelada') DEFAULT 'pendiente',
     numero_factura VARCHAR(50),
     FOREIGN KEY (id_proveedor) REFERENCES Proveedor(id_proveedor)
