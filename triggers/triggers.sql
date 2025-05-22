@@ -42,7 +42,7 @@ CREATE TRIGGER trg_guardar_fecha_modificacion_producto
 BEFORE UPDATE ON Producto
 FOR EACH ROW
 BEGIN
-  SET NEW.fecha_creacion = CURRENT_TIMESTAMP;
+  SET NEW.fecha_modificacion = CURRENT_TIMESTAMP;
 END;
 //
 DELIMITER ;
@@ -107,6 +107,42 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'No se puede eliminar el cliente porque tiene órdenes asociadas.';
   END IF;
+END;
+//
+DELIMITER ;
+
+DELIMITER //
+CREATE TRIGGER trg_descuento_stock_detalle_orden
+AFTER INSERT ON Detalle_Orden
+FOR EACH ROW
+BEGIN
+    DECLARE estado_orden VARCHAR(20);
+
+    SELECT estado INTO estado_orden
+    FROM Orden
+    WHERE id_orden = NEW.id_orden;
+
+    IF estado_orden = 'pagado' THEN
+        UPDATE Producto
+        SET stock = stock - NEW.cantidad
+        WHERE id_producto = NEW.id_producto;
+    END IF;
+END;
+//
+DELIMITER ;
+
+
+DELIMITER //
+CREATE TRIGGER trg_actualizar_stock_orden_pagada_update
+AFTER UPDATE ON Orden
+FOR EACH ROW
+BEGIN
+    IF OLD.estado <> 'pagado' AND NEW.estado = 'pagado' THEN
+        UPDATE Producto p
+        JOIN Detalle_Orden do ON p.id_producto = do.id_producto
+        SET p.stock = p.stock - do.cantidad
+        WHERE do.id_orden = NEW.id_orden;
+    END IF;
 END;
 //
 DELIMITER ;

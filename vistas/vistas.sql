@@ -27,7 +27,7 @@ FROM Orden o
 JOIN Cliente c ON o.id_cliente = c.id_cliente
 JOIN Vendedor v ON o.id_vendedor = v.id_vendedor
 LEFT JOIN Detalle_Orden d ON o.id_orden = d.id_orden
-GROUP BY o.id_orden;
+GROUP BY o.id_orden, o.fecha, o.estado, c.nombre, c.apellido, v.nombre, v.apellido;
 
 CREATE OR REPLACE VIEW vista_detalle_ordenes AS
 SELECT 

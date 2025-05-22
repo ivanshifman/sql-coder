@@ -85,7 +85,7 @@ BEGIN
   INTO nombre_completo
   FROM Cliente
   WHERE id_cliente = p_id_cliente;
-  RETURN nombre_completo;
+  RETURN IFNULL(nombre_completo, 'Cliente no encontrado');
 END;
 //
 DELIMITER ;

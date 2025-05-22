@@ -37,10 +37,11 @@ CREATE TABLE Producto (
     nombre_producto VARCHAR(100) NOT NULL,
     descripcion TEXT,
     precio DECIMAL(10,2) NOT NULL,
-    stock INT NOT NULL,
+    stock INT NOT NULL CHECK (stock > 0),
     id_categoria INT UNSIGNED NOT NULL,
     id_proveedor_principal INT UNSIGNED NOT NULL,
     fecha_creacion DATETIME DEFAULT CURRENT_TIMESTAMP,
+    fecha_modificacion DATETIME DEFAULT CURRENT_TIMESTAMP,
     activo BOOLEAN DEFAULT TRUE,
     FOREIGN KEY (id_categoria) REFERENCES Categoria(id_categoria)
         ON DELETE RESTRICT ON UPDATE CASCADE,
