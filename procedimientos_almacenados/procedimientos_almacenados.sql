@@ -195,3 +195,34 @@ BEGIN
     END IF;
 END //
 DELIMITER ;
+
+DELIMITER //
+CREATE PROCEDURE sp_actualizar_estado_ordenes_antiguas(IN dias INT)
+BEGIN
+    DECLARE done INT DEFAULT 0;
+    DECLARE v_id_orden INT;
+
+    DECLARE cur CURSOR FOR
+        SELECT id_orden
+        FROM Orden
+        WHERE estado = 'pendiente' AND fecha < NOW() - INTERVAL dias DAY;
+
+    DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = 1;
+
+    OPEN cur;
+
+    read_loop: LOOP
+        FETCH cur INTO v_id_orden;
+        IF done THEN
+            LEAVE read_loop;
+        END IF;
+
+        UPDATE Orden
+        SET estado = 'cancelado'
+        WHERE id_orden = v_id_orden;
+    END LOOP;
+
+    CLOSE cur;
+END;
+//
+DELIMITER ;

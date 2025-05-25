@@ -68,7 +68,7 @@ JOIN Detalle_Compra_Proveedor dcp ON cp.id_compra = dcp.id_compra
 JOIN Producto p ON dcp.id_producto = p.id_producto
 JOIN Proveedor pr ON cp.id_proveedor = pr.id_proveedor;
 
-CREATE OR REPLACE VIEW Vista_Totales_Orden AS
+CREATE OR REPLACE VIEW vista_totales_orden AS
 SELECT 
     o.id_orden,
     c.nombre AS cliente_nombre,
