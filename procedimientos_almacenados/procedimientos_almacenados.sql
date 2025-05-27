@@ -4,8 +4,14 @@ CREATE PROCEDURE sp_insertar_orden (
     IN p_id_vendedor INT
 )
 BEGIN
-    INSERT INTO Orden (id_cliente, id_vendedor)
-    VALUES (p_id_cliente, p_id_vendedor);
+    IF NOT EXISTS (SELECT 1 FROM Cliente WHERE id_cliente = p_id_cliente) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cliente no existe.';
+    ELSEIF NOT EXISTS (SELECT 1 FROM Vendedor WHERE id_vendedor = p_id_vendedor) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Vendedor no existe.';
+    ELSE
+        INSERT INTO Orden (id_cliente, id_vendedor)
+        VALUES (p_id_cliente, p_id_vendedor);
+    END IF;
 END;
 //
 DELIMITER ;
@@ -16,10 +22,20 @@ CREATE PROCEDURE sp_actualizar_stock_producto (
     IN p_cantidad_vendida INT
 )
 BEGIN
-    UPDATE Producto
-    SET stock = stock - p_cantidad_vendida
-    WHERE id_producto = p_id_producto
-      AND stock >= p_cantidad_vendida;
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE id_producto = p_id_producto) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Producto no existe.';
+    ELSEIF p_cantidad_vendida <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cantidad vendida debe ser mayor que 0.';
+    ELSE
+        UPDATE Producto
+        SET stock = stock - p_cantidad_vendida
+        WHERE id_producto = p_id_producto
+          AND stock >= p_cantidad_vendida;
+
+        IF ROW_COUNT() = 0 THEN
+            SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Stock insuficiente.';
+        END IF;
+    END IF;
 END //
 DELIMITER ;
 
@@ -29,12 +45,15 @@ CREATE PROCEDURE sp_registrar_compra_proveedor (
     IN p_numero_factura VARCHAR(50)
 )
 BEGIN
-    INSERT INTO Compra_Proveedor (id_proveedor, numero_factura)
-    VALUES (p_id_proveedor, p_numero_factura);
+    IF NOT EXISTS (SELECT 1 FROM Proveedor WHERE id_proveedor = p_id_proveedor) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Proveedor no existe.';
+    ELSE
+        INSERT INTO Compra_Proveedor (id_proveedor, numero_factura)
+        VALUES (p_id_proveedor, p_numero_factura);
+    END IF;
 END;
 //
 DELIMITER ;
-
 
 DELIMITER //
 CREATE PROCEDURE sp_insertar_resena (
@@ -44,8 +63,16 @@ CREATE PROCEDURE sp_insertar_resena (
     IN p_comentario TEXT
 )
 BEGIN
-    INSERT INTO Resena (id_cliente, id_producto, calificacion, comentario)
-    VALUES (p_id_cliente, p_id_producto, p_calificacion, p_comentario);
+    IF NOT EXISTS (SELECT 1 FROM Cliente WHERE id_cliente = p_id_cliente) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cliente no existe.';
+    ELSEIF NOT EXISTS (SELECT 1 FROM Producto WHERE id_producto = p_id_producto) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Producto no existe.';
+    ELSEIF p_calificacion < 1 OR p_calificacion > 5 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Calificación debe estar entre 1 y 5.';
+    ELSE
+        INSERT INTO Resena (id_cliente, id_producto, calificacion, comentario)
+        VALUES (p_id_cliente, p_id_producto, p_calificacion, p_comentario);
+    END IF;
 END //
 DELIMITER ;
 
@@ -72,9 +99,12 @@ CREATE PROCEDURE sp_eliminar_producto (
     IN p_id_producto INT
 )
 BEGIN
-    IF NOT EXISTS (SELECT 1 FROM Detalle_Orden WHERE id_producto = p_id_producto)
-       AND NOT EXISTS (SELECT 1 FROM Detalle_Compra_Proveedor WHERE id_producto = p_id_producto)
-    THEN
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE id_producto = p_id_producto) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Producto no existe.';
+    ELSEIF EXISTS (SELECT 1 FROM Detalle_Orden WHERE id_producto = p_id_producto)
+       OR EXISTS (SELECT 1 FROM Detalle_Compra_Proveedor WHERE id_producto = p_id_producto) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'No se puede eliminar el producto: está asociado a otras tablas.';
+    ELSE
         DELETE FROM Producto
         WHERE id_producto = p_id_producto;
     END IF;
@@ -89,11 +119,21 @@ CREATE PROCEDURE sp_asociar_producto_a_proveedor (
     IN p_tiempo_entrega INT
 )
 BEGIN
-    INSERT INTO Producto_Proveedor (
-        id_producto, id_proveedor, precio_compra, tiempo_entrega_dias, es_principal
-    ) VALUES (
-        p_id_producto, p_id_proveedor, p_precio_compra, p_tiempo_entrega, FALSE
-    );
+    IF NOT EXISTS (SELECT 1 FROM Producto WHERE id_producto = p_id_producto) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Producto no existe.';
+    ELSEIF NOT EXISTS (SELECT 1 FROM Proveedor WHERE id_proveedor = p_id_proveedor) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Proveedor no existe.';
+    ELSEIF p_precio_compra <= 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Precio de compra inválido.';
+    ELSEIF p_tiempo_entrega < 0 THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Tiempo de entrega inválido.';
+    ELSE
+        INSERT INTO Producto_Proveedor (
+            id_producto, id_proveedor, precio_compra, tiempo_entrega_dias, es_principal
+        ) VALUES (
+            p_id_producto, p_id_proveedor, p_precio_compra, p_tiempo_entrega, FALSE
+        );
+    END IF;
 END //
 DELIMITER ;
 
@@ -154,20 +194,31 @@ BEGIN
   DECLARE v_precio_unitario DECIMAL(10,2);
   DECLARE v_id_orden INT;
 
-  SELECT precio INTO v_precio_unitario
-  FROM Producto
-  WHERE id_producto = p_id_producto;
+  IF NOT EXISTS (SELECT 1 FROM Cliente WHERE id_cliente = p_id_cliente) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cliente no existe.';
+  ELSEIF NOT EXISTS (SELECT 1 FROM Vendedor WHERE id_vendedor = p_id_vendedor) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Vendedor no existe.';
+  ELSEIF NOT EXISTS (SELECT 1 FROM Producto WHERE id_producto = p_id_producto) THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Producto no existe.';
+  ELSEIF p_cantidad <= 0 THEN
+    SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cantidad inválida.';
+  ELSE
+    SELECT precio INTO v_precio_unitario
+    FROM Producto
+    WHERE id_producto = p_id_producto;
 
-  INSERT INTO Orden (id_cliente, id_vendedor)
-  VALUES (p_id_cliente, p_id_vendedor);
+    INSERT INTO Orden (id_cliente, id_vendedor)
+    VALUES (p_id_cliente, p_id_vendedor);
 
-  SET v_id_orden = LAST_INSERT_ID();
+    SET v_id_orden = LAST_INSERT_ID();
 
-  INSERT INTO Detalle_Orden (id_orden, id_producto, cantidad, precio_unitario)
-  VALUES (v_id_orden, p_id_producto, p_cantidad, v_precio_unitario);
+    INSERT INTO Detalle_Orden (id_orden, id_producto, cantidad, precio_unitario)
+    VALUES (v_id_orden, p_id_producto, p_cantidad, v_precio_unitario);
+  END IF;
 END;
 //
 DELIMITER ;
+
 
 DELIMITER //
 CREATE PROCEDURE sp_obtener_total_compras_cliente (
