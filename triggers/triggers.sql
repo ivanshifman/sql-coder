@@ -112,6 +112,32 @@ END;
 DELIMITER ;
 
 DELIMITER //
+CREATE TRIGGER trg_validar_stock_detalle_orden
+BEFORE INSERT ON Detalle_Orden
+FOR EACH ROW
+BEGIN
+    DECLARE estado_orden VARCHAR(20);
+    DECLARE stock_actual INT;
+
+    SELECT estado INTO estado_orden
+    FROM Orden
+    WHERE id_orden = NEW.id_orden;
+
+    IF estado_orden = 'pagado' THEN
+        SELECT stock INTO stock_actual
+        FROM Producto
+        WHERE id_producto = NEW.id_producto;
+
+        IF stock_actual < NEW.cantidad THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Stock insuficiente para el producto';
+        END IF;
+    END IF;
+END;
+//
+DELIMITER ;
+
+DELIMITER //
 CREATE TRIGGER trg_descuento_stock_detalle_orden
 AFTER INSERT ON Detalle_Orden
 FOR EACH ROW
@@ -131,16 +157,43 @@ END;
 //
 DELIMITER ;
 
-
 DELIMITER //
 CREATE TRIGGER trg_actualizar_stock_orden_pagada_update
 AFTER UPDATE ON Orden
 FOR EACH ROW
 BEGIN
+    DECLARE insuficiente_stock INT DEFAULT 0;
+
     IF OLD.estado <> 'pagado' AND NEW.estado = 'pagado' THEN
+        SELECT COUNT(*) INTO insuficiente_stock
+        FROM Detalle_Orden do
+        JOIN Producto p ON p.id_producto = do.id_producto
+        WHERE do.id_orden = NEW.id_orden AND p.stock < do.cantidad;
+
+        IF insuficiente_stock > 0 THEN
+            SIGNAL SQLSTATE '45000'
+            SET MESSAGE_TEXT = 'Stock insuficiente para completar la orden';
+        ELSE
+            UPDATE Producto p
+            JOIN Detalle_Orden do ON p.id_producto = do.id_producto
+            SET p.stock = p.stock - do.cantidad
+            WHERE do.id_orden = NEW.id_orden;
+        END IF;
+    END IF;
+END;
+//
+DELIMITER ;
+
+
+DELIMITER //
+CREATE TRIGGER trg_revertir_stock_orden_cancelada
+AFTER UPDATE ON Orden
+FOR EACH ROW
+BEGIN
+    IF OLD.estado = 'pagado' AND NEW.estado IN ('cancelado', 'pendiente') THEN
         UPDATE Producto p
         JOIN Detalle_Orden do ON p.id_producto = do.id_producto
-        SET p.stock = p.stock - do.cantidad
+        SET p.stock = p.stock + do.cantidad
         WHERE do.id_orden = NEW.id_orden;
     END IF;
 END;

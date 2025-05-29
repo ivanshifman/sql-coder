@@ -219,7 +219,6 @@ END;
 //
 DELIMITER ;
 
-
 DELIMITER //
 CREATE PROCEDURE sp_obtener_total_compras_cliente (
     IN p_id_cliente INT,
