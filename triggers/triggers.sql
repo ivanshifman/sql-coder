@@ -6,8 +6,7 @@ BEGIN
   UPDATE Producto
   SET stock = stock + NEW.cantidad
   WHERE id_producto = NEW.id_producto;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -20,8 +19,7 @@ BEGIN
     SET activo = FALSE
     WHERE id_producto = NEW.id_producto;
   END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -33,8 +31,7 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'La calificación debe estar entre 1 y 5';
   END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -43,8 +40,7 @@ BEFORE UPDATE ON Producto
 FOR EACH ROW
 BEGIN
   SET NEW.fecha_modificacion = CURRENT_TIMESTAMP;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -59,8 +55,7 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'No se puede eliminar el proveedor porque es proveedor principal de uno o más productos.';
   END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -75,8 +70,7 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'El email ya está registrado como vendedor.';
   END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -91,8 +85,7 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'El email ya está registrado como cliente.';
   END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -107,8 +100,7 @@ BEGIN
     SIGNAL SQLSTATE '45000'
     SET MESSAGE_TEXT = 'No se puede eliminar el cliente porque tiene órdenes asociadas.';
   END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -133,8 +125,7 @@ BEGIN
             SET MESSAGE_TEXT = 'Stock insuficiente para el producto';
         END IF;
     END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -153,8 +144,7 @@ BEGIN
         SET stock = stock - NEW.cantidad
         WHERE id_producto = NEW.id_producto;
     END IF;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -180,10 +170,8 @@ BEGIN
             WHERE do.id_orden = NEW.id_orden;
         END IF;
     END IF;
-END;
-//
+END //
 DELIMITER ;
-
 
 DELIMITER //
 CREATE TRIGGER trg_revertir_stock_orden_cancelada
@@ -196,6 +184,5 @@ BEGIN
         SET p.stock = p.stock + do.cantidad
         WHERE do.id_orden = NEW.id_orden;
     END IF;
-END;
-//
+END //
 DELIMITER ;

@@ -9,8 +9,7 @@ BEGIN
   FROM Detalle_Orden
   WHERE id_orden = p_id_orden;
   RETURN total;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -23,8 +22,7 @@ BEGIN
   FROM Producto
   WHERE id_producto = p_id_producto;
   RETURN stock_actual;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -38,8 +36,7 @@ BEGIN
   FROM Resena
   WHERE id_producto = p_id_producto;
   RETURN IFNULL(promedio, 0.00);
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -56,8 +53,7 @@ BEGIN
   WHERE c.id_proveedor = p_id_proveedor;
 
   RETURN IFNULL(total, 0.00);
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -71,8 +67,7 @@ BEGIN
   FROM Producto
   WHERE id_categoria = p_id_categoria;
   RETURN cantidad;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -86,8 +81,7 @@ BEGIN
   FROM Cliente
   WHERE id_cliente = p_id_cliente;
   RETURN IFNULL(nombre_completo, 'Cliente no encontrado');
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -100,8 +94,7 @@ BEGIN
   FROM Orden
   WHERE id_cliente = p_id_cliente;
   RETURN cantidad;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -116,8 +109,7 @@ BEGIN
   JOIN Proveedor pr ON p.id_proveedor_principal = pr.id_proveedor
   WHERE p.id_producto = p_id_producto;
   RETURN proveedor_nombre;
-END;
-//
+END //
 DELIMITER ;
 
 DELIMITER //
@@ -131,6 +123,5 @@ BEGIN
   FROM Producto_Proveedor
   WHERE id_producto = p_id_producto;
   RETURN IFNULL(promedio, 0.00);
-END;
-//
+END //
 DELIMITER ;
